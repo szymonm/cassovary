@@ -13,6 +13,8 @@
  */
 package com.twitter.cassovary.util
 
+import scala.collection.mutable
+
 /**
  * This class is a wrapper around a "shared array" to provide the Seq trait functions
  * the concept of shared array is that a number of Seqs share a two-dimensional big array
@@ -25,21 +27,29 @@ package com.twitter.cassovary.util
  * @param offset the offset in the second dimension
  * @param length length of the Seq
  */
-class SharedArraySeq(id: Int, sharedArray: Array[Array[Int]], offset: Int, override val length: Int)
-    extends IndexedSeq[Int] {
-  val sharedArrayIdx = id % sharedArray.length
+class ArraySlice[@specialized(Int, Long) T](array: Array[T],
+                                            offset: Int, override val length: Int)
+    extends mutable.IndexedSeq[T] {
 
-  def apply(idx: Int): Int = {
-    sharedArray(sharedArrayIdx)(offset + idx)
+  def apply(idx: Int): T = {
+    if (idx >= length) {
+      throw new IndexOutOfBoundsException()
+    } else {
+      array(offset + idx)
+    }
   }
 
-  def update(idx: Int, elem: Int) {
-    sharedArray(sharedArrayIdx)(offset + idx) = elem
+  def update(idx: Int, elem: T) {
+    if (idx >= length) {
+      throw new IndexOutOfBoundsException()
+    } else {
+      array(offset + idx) = elem
+    }
   }
 
-  override def foreach[U](f: Int =>  U) {
+  override def foreach[U](f: T =>  U) {
     for (i <- 0 until length) {
-      f(sharedArray(sharedArrayIdx)(offset + i))
+      f(array(offset + i))
     }
   }
 }
